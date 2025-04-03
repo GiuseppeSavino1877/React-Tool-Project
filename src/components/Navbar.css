@@ -1,0 +1,41 @@
+.navbar {
+  background-color: #000000;
+  padding: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center; /* Allinea verticalmente tutti gli elementi */
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Allinea verticalmente gli elementi della lista al logo */
+  margin: 0;
+  padding: 0;
+}
+
+.navbar li {
+  margin-right: 15px; /* Spazio uniforme tra le voci */
+}
+
+.navbar li:last-child {
+  margin-right: 0; /* Nessun margine a destra per l'ultimo elemento */
+}
+
+.navbar a {
+  text-decoration: none;
+  color: white;
+  font-size: 18px; /* Adegua la dimensione del testo se necessario */
+  transition: 0.3s;
+  display: flex; /* Utilizza Flexbox per centrare il testo all'interno del link */
+  align-items: center; /* Centra il testo verticalmente rispetto al logo */
+}
+
+.navbar a:hover {
+  color: rgb(47, 0, 255); /* Cambio di colore al passaggio del mouse */
+}
+
+.navbar img {
+  margin-right: 10px; /* Distanza tra l'immagine e il testo */
+}
