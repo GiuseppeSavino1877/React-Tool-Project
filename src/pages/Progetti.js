@@ -52,7 +52,7 @@ const Progetti = () => {
         }
     };
 
-    const handleEdit = (progetto) => {
+    const handleEdit = (progetto) => { 
         setEditing(progetto);
         setFormData(progetto);
         setShowForm(true);
