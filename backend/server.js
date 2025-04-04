@@ -3,6 +3,9 @@ const cors = require('cors');
 
 const personaleRoutes = require('./routes/personale');
 const progettiRoutes = require('./routes/progetti');
+const assegnazioniRoutes = require('./routes/assegnazioni');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +15,7 @@ app.use(express.json());
 
 app.use('/api/personale', personaleRoutes);
 app.use('/api/progetti', progettiRoutes);
+app.use('/api/assegnazioni', assegnazioniRoutes);
 
 app.get('/', (req, res) => {
     res.send('API attiva 🎉');
