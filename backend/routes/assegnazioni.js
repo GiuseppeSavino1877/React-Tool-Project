@@ -20,6 +20,23 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET assegnazioni per una persona con titolo progetto
+router.get('/persona/:id', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT a.percentuale, pr.titolo AS progetto
+            FROM assegnazioni a
+            JOIN progetti pr ON a.id_progetto = pr.id
+            WHERE a.id_personale = $1
+        `, [req.params.id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Errore nel recupero assegnazioni per persona:", err);
+        res.status(500).json({ error: 'Errore nel recupero assegnazioni per persona' });
+    }
+});
+
 // GET assegnazioni di un singolo progetto
 router.get('/:progettoId', async (req, res) => {
     try {
@@ -32,6 +49,24 @@ router.get('/:progettoId', async (req, res) => {
         res.status(500).json({ error: 'Errore nel recupero assegnazioni del progetto' });
     }
 });
+
+router.get('/dettagli/:progettoId', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT a.percentuale, p.nome, p.cognome, p.ruolo
+            FROM assegnazioni a
+            JOIN personale p ON a.id_personale = p.id
+            WHERE a.id_progetto = $1
+        `, [req.params.progettoId]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Errore nel recupero dettagli assegnazioni:", err);
+        res.status(500).json({ error: 'Errore nel recupero dettagli assegnazioni' });
+    }
+});
+
+
 
 // POST: crea o sovrascrive assegnazioni per un progetto
 router.post('/', async (req, res) => {

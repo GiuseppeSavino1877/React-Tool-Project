@@ -90,7 +90,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                                         }
                                         min="0"
                                         max="100"
-                                        required
+                                        required disabled
                                     />
                                 </div>
                             </div>
