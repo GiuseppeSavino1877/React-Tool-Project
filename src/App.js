@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Progetti from "./pages/Progetti";
 import Personale from "./pages/Personale";
 import Footer from "./components/Footer";
+import Assegnazioni from "./pages/Assegnazioni"
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/progetti" element={<Progetti />} />
               <Route path="/personale" element={<Personale />} />
+              <Route path="/assegnazioni" element={<Assegnazioni />} />
             </Routes>
           </div>
           <Footer />

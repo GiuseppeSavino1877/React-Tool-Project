@@ -13,6 +13,7 @@ const Navbar = () => {
                     </Link>
                 </li>
                 <li className="mt-2 ms-5"><Link to="/">Home</Link></li>
+                <li className="mt-2"><Link to="/assegnazioni">Assegnazioni</Link></li>
                 <li className="mt-2"><Link to="/progetti">Progetti</Link></li>
                 <li className="mt-2"><Link to="/personale">Personale</Link></li>
             </ul>

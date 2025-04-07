@@ -291,26 +291,45 @@ const Progetti = () => {
                         {assegnazioni.map((a, index) => {
                             const persona = personaleDisponibile.find(p => p.id === a.id_personale);
                             if (!persona) return null;
+
                             const maxDisponibile = 100 - persona.percentuale_impiego;
+
                             return (
-                                <div key={index} className="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
-                                    <div>{persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)</div>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        style={{ width: "100px" }}
-                                        value={a.percentuale}
-                                        min="0"
-                                        max={maxDisponibile}
-                                        onChange={(e) => {
-                                            const valore = Math.min(parseInt(e.target.value) || 0, maxDisponibile);
-                                            setAssegnazioni(prev => prev.map((item, i) => i === index ? { ...item, percentuale: valore } : item));
-                                        }}
-                                    />
-                                    <button className="btn btn-danger btn-sm ms-2" onClick={() => setAssegnazioni(prev => prev.filter((_, i) => i !== index))}>🗑️</button>
+                                <div key={index} className="row align-items-center border rounded p-2 mb-2">
+
+                                    {/* Colonna 1 - Nome, ruolo e massimo */}
+                                    <div className="col-md-6 col-12">
+                                        {persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)
+                                    </div>
+
+                                    {/* Colonna 2 - Input percentuale */}
+                                    <div className="col-md-3 col-6">
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={a.percentuale}
+                                            min="0"
+                                            max={maxDisponibile}
+                                            onChange={(e) => {
+                                                const valore = Math.min(parseInt(e.target.value) || 0, maxDisponibile);
+                                                setAssegnazioni(prev => prev.map((item, i) => i === index ? { ...item, percentuale: valore } : item));
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Colonna 3 - Bottone elimina */}
+                                    <div className="col-md-3 col-6 text-end">
+                                        <button
+                                            className="btn btn-danger btn-sm"
+                                            onClick={() => setAssegnazioni(prev => prev.filter((_, i) => i !== index))}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}
+
                     </div>
 
                     <div className="d-flex gap-2">
@@ -352,7 +371,7 @@ const Progetti = () => {
                 <nav>
                     <ul className="pagination">
                         <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>&laquo;</button>
+                            <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Precedente</button>
                         </li>
                         {Array.from({ length: totalPages }, (_, i) => (
                             <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
@@ -360,7 +379,7 @@ const Progetti = () => {
                             </li>
                         ))}
                         <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>&raquo;</button>
+                            <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Successiva</button>
                         </li>
                     </ul>
                 </nav>

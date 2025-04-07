@@ -152,7 +152,7 @@ const Personale = () => {
                     <nav>
                         <ul className="pagination">
                             <li className={`page-item ${currentPage === 1 && "disabled"}`}>
-                                <button className="page-link" onClick={() => changePage(currentPage - 1)}>&laquo;</button>
+                                <button className="page-link" onClick={() => changePage(currentPage - 1)}>Precedente</button>
                             </li>
                             {Array.from({ length: totalPages }, (_, i) => (
                                 <li key={i + 1} className={`page-item ${currentPage === i + 1 && "active"}`}>
@@ -160,7 +160,7 @@ const Personale = () => {
                                 </li>
                             ))}
                             <li className={`page-item ${currentPage === totalPages && "disabled"}`}>
-                                <button className="page-link" onClick={() => changePage(currentPage + 1)}>&raquo;</button>
+                                <button className="page-link" onClick={() => changePage(currentPage + 1)}>Successiva</button>
                             </li>
                         </ul>
                     </nav>

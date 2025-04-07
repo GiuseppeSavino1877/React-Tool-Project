@@ -67,4 +67,19 @@ footer {
   margin-top: auto; 
 }
 
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1;
+  padding-bottom: 50px;
+}
+
+
 

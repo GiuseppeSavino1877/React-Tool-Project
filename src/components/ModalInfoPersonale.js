@@ -32,7 +32,7 @@ const ModalInfoPersonale = ({ show, onClose, persona, progetti }) => {
                     </ul>
                 )}
             </Modal.Body>
-
+                            
         </Modal>
     );
 };
