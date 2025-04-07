@@ -21,7 +21,7 @@ const Progetti = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("titolo");
     const [sortDirection, setSortDirection] = useState("asc");
-    const itemsPerPage = 15;
+    const itemsPerPage = 12;
 
     const showToast = (message, type = "success") => {
         setToastMsg(message);
