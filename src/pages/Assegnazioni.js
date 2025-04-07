@@ -83,95 +83,99 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="container mt-4 content-wrapper">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h2 className="fw-bold">Status Allocazione</h2>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-outline-success" onClick={exportToExcel}>Esporta</button>
-                    <button className="btn btn-outline-primary" onClick={handlePrint}>Stampa</button>
-                </div>
-            </div>
+        <div className="d-flex flex-column min-vh-100">
+            <div className="container mt-4 flex-grow-1">
+                <div className="container mt-4 content-wrapper">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h2 className="fw-bold">Status Allocazione</h2>
+                        <div className="d-flex gap-2">
+                            <button className="btn btn-outline-success" onClick={exportToExcel}>Esporta</button>
+                            <button className="btn btn-outline-primary" onClick={handlePrint}>Stampa</button>
+                        </div>
+                    </div>
 
-            <ul className="nav nav-tabs mb-3">
-                <li className="nav-item">
-                    <button
-                        className={`nav-link ${activeTab === "carico" && "active"}`}
-                        onClick={() => setActiveTab("carico")}
-                    >
-                        <FaUsers className="me-1" /> Carico Personale <span className="badge bg-secondary ms-1">{caricoPersonale.length}</span>
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button
-                        className={`nav-link ${activeTab === "progetti" && "active"}`}
-                        onClick={() => setActiveTab("progetti")}
-                    >
-                        <FaChartBar className="me-1" /> Persone per Progetto <span className="badge bg-secondary ms-1">{personePerProgetto.length}</span>
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button
-                        className={`nav-link ${activeTab === "ruoli" && "active"}`}
-                        onClick={() => setActiveTab("ruoli")}
-                    >
-                        <FaChartPie className="me-1" /> Distribuzione Ruoli <span className="badge bg-secondary ms-1">{distribuzioneRuoli.length}</span>
-                    </button>
-                </li>
-            </ul>
-
-            <div className="card p-3" ref={printRef}>
-                {activeTab === "carico" && (
-                    <ResponsiveContainer width="100%" height={caricoPersonale.length * 45}>
-                        <BarChart
-                            data={caricoPersonale}
-                            layout="vertical"
-                            margin={{ top: 20, bottom: 20, left: 100, right: 40 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" domain={[0, 100]} />
-                            <YAxis dataKey="nome" type="category" width={200} interval={0} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="percentuale" fill="#8884d8" name="% Impiego" />
-                        </BarChart>
-                    </ResponsiveContainer>
-
-                )}
-
-                {activeTab === "progetti" && (
-                    <ResponsiveContainer width="100%" height={500}>
-                        <BarChart data={personePerProgetto} margin={{ bottom: 80 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" angle={-30} textAnchor="end" interval={0} height={100} />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="value" fill="#82ca9d" name="# Persone" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                )}
-
-                {activeTab === "ruoli" && (
-                    <ResponsiveContainer width="100%" height={500}>
-                        <PieChart>
-                            <Pie
-                                data={distribuzioneRuoli}
-                                dataKey="value"
-                                nameKey="name"
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={120}
-                                label
+                    <ul className="nav nav-tabs mb-3">
+                        <li className="nav-item">
+                            <button
+                                className={`nav-link ${activeTab === "carico" && "active"}`}
+                                onClick={() => setActiveTab("carico")}
                             >
-                                {distribuzioneRuoli.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                )}
+                                <FaUsers className="me-1" /> Carico Personale <span className="badge bg-secondary ms-1">{caricoPersonale.length}</span>
+                            </button>
+                        </li>
+                        <li className="nav-item">
+                            <button
+                                className={`nav-link ${activeTab === "progetti" && "active"}`}
+                                onClick={() => setActiveTab("progetti")}
+                            >
+                                <FaChartBar className="me-1" /> Persone per Progetto <span className="badge bg-secondary ms-1">{personePerProgetto.length}</span>
+                            </button>
+                        </li>
+                        <li className="nav-item">
+                            <button
+                                className={`nav-link ${activeTab === "ruoli" && "active"}`}
+                                onClick={() => setActiveTab("ruoli")}
+                            >
+                                <FaChartPie className="me-1" /> Distribuzione Ruoli <span className="badge bg-secondary ms-1">{distribuzioneRuoli.length}</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div className="card p-3" ref={printRef}>
+                        {activeTab === "carico" && (
+                            <ResponsiveContainer width="100%" height={caricoPersonale.length * 45}>
+                                <BarChart
+                                    data={caricoPersonale}
+                                    layout="vertical"
+                                    margin={{ top: 20, bottom: 20, left: 100, right: 40 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis type="number" domain={[0, 100]} />
+                                    <YAxis dataKey="nome" type="category" width={200} interval={0} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="percentuale" fill="#8884d8" name="% Impiego" />
+                                </BarChart>
+                            </ResponsiveContainer>
+
+                        )}
+
+                        {activeTab === "progetti" && (
+                            <ResponsiveContainer width="100%" height={500}>
+                                <BarChart data={personePerProgetto} margin={{ bottom: 80 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" angle={-30} textAnchor="end" interval={0} height={100} />
+                                    <YAxis allowDecimals={false} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="value" fill="#82ca9d" name="# Persone" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+
+                        {activeTab === "ruoli" && (
+                            <ResponsiveContainer width="100%" height={500}>
+                                <PieChart>
+                                    <Pie
+                                        data={distribuzioneRuoli}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={120}
+                                        label
+                                    >
+                                        {distribuzioneRuoli.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

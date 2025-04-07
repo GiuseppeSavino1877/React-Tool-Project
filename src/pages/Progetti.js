@@ -194,195 +194,199 @@ const Progetti = () => {
     const totalPages = Math.ceil(sortedProgetti.length / itemsPerPage);
 
     return (
-        <div className="container mt-4 content-wrapper">
-            {toastMsg && (
-                <div className={`alert alert-${toastType}`} role="alert">
-                    {toastMsg}
-                </div>
-            )}
-
-            <h1 className="text-center">Gestione Progetti</h1>
-
-            <div className="mb-3 d-flex justify-content-between">
-                <input
-                    type="text"
-                    className="form-control w-50"
-                    placeholder="Cerca per titolo..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1);
-                    }}
-                />
-                <div className="d-flex gap-2">
-                    <select className="form-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                        <option value="titolo">Titolo</option>
-                        <option value="data_inizio">Data Inizio</option>
-                        <option value="data_rilascio">Data Rilascio</option>
-                        <option value="durata_presunta">Durata</option>
-                    </select>
-                    <select className="form-select" value={sortDirection} onChange={(e) => setSortDirection(e.target.value)}>
-                        <option value="asc">⬆️</option>
-                        <option value="desc">⬇️</option>
-                    </select>
-                </div>
-            </div>
-
-            {showForm && (
-                <div className="card p-3 mb-4">
-                    <h5>{editing ? "Modifica Progetto" : "Nuovo Progetto"}</h5>
-                    <div className="row">
-                        <div className="mb-3 col-4">
-                            <label className="form-label">Titolo</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.titolo}
-                                onChange={e => setFormData({ ...formData, titolo: e.target.value })}
-                            />
+        <div className="d-flex flex-column min-vh-100">
+            <div className="container mt-4 flex-grow-1">
+                <div className="container mt-4 content-wrapper">
+                    {toastMsg && (
+                        <div className={`alert alert-${toastType}`} role="alert">
+                            {toastMsg}
                         </div>
-                        <div className="mb-3 col-4">
-                            <label className="form-label">Data Inizio</label>
-                            <input
-                                type="date"
-                                className="form-control"
-                                value={formData.data_inizio}
-                                onChange={e => setFormData({ ...formData, data_inizio: e.target.value })}
-                            />
-                        </div>
-                        <div className="mb-3 col-4">
-                            <label className="form-label">Data Rilascio</label>
-                            <input
-                                type="date"
-                                className="form-control"
-                                value={formData.data_rilascio}
-                                onChange={e => setFormData({ ...formData, data_rilascio: e.target.value })}
-                            />
-                        </div>
-                        <div className="mb-3 col-4">
-                            <label className="form-label">Durata Presunta</label>
-                            <input
-                                type="number"
-                                className="form-control"
-                                value={formData.durata_presunta}
-                                disabled
-                            />
+                    )}
+
+                    <h1 className="text-center">Gestione Progetti</h1>
+
+                    <div className="mb-3 d-flex justify-content-between">
+                        <input
+                            type="text"
+                            className="form-control w-50"
+                            placeholder="Cerca per titolo..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        />
+                        <div className="d-flex gap-2">
+                            <select className="form-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                                <option value="titolo">Titolo</option>
+                                <option value="data_inizio">Data Inizio</option>
+                                <option value="data_rilascio">Data Rilascio</option>
+                                <option value="durata_presunta">Durata</option>
+                            </select>
+                            <select className="form-select" value={sortDirection} onChange={(e) => setSortDirection(e.target.value)}>
+                                <option value="asc">⬆️</option>
+                                <option value="desc">⬇️</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div className="mb-3">
-                        <h5>Assegnazioni Personale</h5>
-                        <div className="d-flex gap-3 mb-3">
-                            <select className="form-select" value={ruoloSelezionato} onChange={e => setRuoloSelezionato(e.target.value)}>
-                                <option value="">Seleziona ruolo</option>
-                                {[...new Set(personaleDisponibile.map(p => p.ruolo))].map(ruolo => (
-                                    <option key={ruolo} value={ruolo}>{ruolo}</option>
-                                ))}
-                            </select>
-                            <select className="form-select" value={personaSelezionata} onChange={e => setPersonaSelezionata(e.target.value)}>
-                                <option value="">Seleziona persona</option>
-                                {personaleDisponibile.filter(p => p.ruolo === ruoloSelezionato).map(p => (
-                                    <option key={p.id} value={p.id}>{p.nome} {p.cognome}</option>
-                                ))}
-                            </select>
-                            <button className="btn btn-secondary" onClick={handleAddPerson}>Aggiungi</button>
-                        </div>
-
-                        {assegnazioni.map((a, index) => {
-                            const persona = personaleDisponibile.find(p => p.id === a.id_personale);
-                            if (!persona) return null;
-
-                            const maxDisponibile = 100 - persona.percentuale_impiego;
-
-                            return (
-                                <div key={index} className="row align-items-center border rounded p-2 mb-2">
-
-                                    {/* Colonna 1 - Nome, ruolo e massimo */}
-                                    <div className="col-md-6 col-12">
-                                        {persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)
-                                    </div>
-
-                                    {/* Colonna 2 - Input percentuale */}
-                                    <div className="col-md-3 col-6">
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            value={a.percentuale}
-                                            min="0"
-                                            max={maxDisponibile}
-                                            onChange={(e) => {
-                                                const valore = Math.min(parseInt(e.target.value) || 0, maxDisponibile);
-                                                setAssegnazioni(prev => prev.map((item, i) => i === index ? { ...item, percentuale: valore } : item));
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Colonna 3 - Bottone elimina */}
-                                    <div className="col-md-3 col-6 text-end">
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() => setAssegnazioni(prev => prev.filter((_, i) => i !== index))}
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
+                    {showForm && (
+                        <div className="card p-3 mb-4">
+                            <h5>{editing ? "Modifica Progetto" : "Nuovo Progetto"}</h5>
+                            <div className="row">
+                                <div className="mb-3 col-4">
+                                    <label className="form-label">Titolo</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={formData.titolo}
+                                        onChange={e => setFormData({ ...formData, titolo: e.target.value })}
+                                    />
                                 </div>
-                            );
-                        })}
+                                <div className="mb-3 col-4">
+                                    <label className="form-label">Data Inizio</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={formData.data_inizio}
+                                        onChange={e => setFormData({ ...formData, data_inizio: e.target.value })}
+                                    />
+                                </div>
+                                <div className="mb-3 col-4">
+                                    <label className="form-label">Data Rilascio</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={formData.data_rilascio}
+                                        onChange={e => setFormData({ ...formData, data_rilascio: e.target.value })}
+                                    />
+                                </div>
+                                <div className="mb-3 col-4">
+                                    <label className="form-label">Durata Presunta</label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        value={formData.durata_presunta}
+                                        disabled
+                                    />
+                                </div>
+                            </div>
 
-                    </div>
+                            <div className="mb-3">
+                                <h5>Assegnazioni Personale</h5>
+                                <div className="d-flex gap-3 mb-3">
+                                    <select className="form-select" value={ruoloSelezionato} onChange={e => setRuoloSelezionato(e.target.value)}>
+                                        <option value="">Seleziona ruolo</option>
+                                        {[...new Set(personaleDisponibile.map(p => p.ruolo))].map(ruolo => (
+                                            <option key={ruolo} value={ruolo}>{ruolo}</option>
+                                        ))}
+                                    </select>
+                                    <select className="form-select" value={personaSelezionata} onChange={e => setPersonaSelezionata(e.target.value)}>
+                                        <option value="">Seleziona persona</option>
+                                        {personaleDisponibile.filter(p => p.ruolo === ruoloSelezionato).map(p => (
+                                            <option key={p.id} value={p.id}>{p.nome} {p.cognome}</option>
+                                        ))}
+                                    </select>
+                                    <button className="btn btn-secondary" onClick={handleAddPerson}>Aggiungi</button>
+                                </div>
 
-                    <div className="d-flex gap-2">
-                        <button className="btn btn-success" onClick={handleSave}>Salva</button>
-                        <button className="btn btn-secondary" onClick={resetForm}>Annulla</button>
+                                {assegnazioni.map((a, index) => {
+                                    const persona = personaleDisponibile.find(p => p.id === a.id_personale);
+                                    if (!persona) return null;
+
+                                    const maxDisponibile = 100 - persona.percentuale_impiego;
+
+                                    return (
+                                        <div key={index} className="row align-items-center border rounded p-2 mb-2">
+
+                                            {/* Colonna 1 - Nome, ruolo e massimo */}
+                                            <div className="col-md-6 col-12">
+                                                {persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)
+                                            </div>
+
+                                            {/* Colonna 2 - Input percentuale */}
+                                            <div className="col-md-3 col-6">
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={a.percentuale}
+                                                    min="0"
+                                                    max={maxDisponibile}
+                                                    onChange={(e) => {
+                                                        const valore = Math.min(parseInt(e.target.value) || 0, maxDisponibile);
+                                                        setAssegnazioni(prev => prev.map((item, i) => i === index ? { ...item, percentuale: valore } : item));
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {/* Colonna 3 - Bottone elimina */}
+                                            <div className="col-md-3 col-6 text-end">
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => setAssegnazioni(prev => prev.filter((_, i) => i !== index))}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                            </div>
+
+                            <div className="d-flex gap-2">
+                                <button className="btn btn-success" onClick={handleSave}>Salva</button>
+                                <button className="btn btn-secondary" onClick={resetForm}>Annulla</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <button className="btn btn-primary mb-3" onClick={() => setShowForm(true)}>Nuovo Progetto</button>
+
+                    <table className="table table-striped table-bordered text-center">
+                        <thead>
+                            <tr>
+                                <th>Titolo</th>
+                                <th>Data Inizio</th>
+                                <th>Durata</th>
+                                <th>Data Rilascio</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentItems.map((proj) => (
+                                <tr key={proj.id}>
+                                    <td>{proj.titolo}</td>
+                                    <td>{new Date(proj.data_inizio).toLocaleDateString("it-IT")}</td>
+                                    <td>{proj.durata_presunta} gg</td>
+                                    <td>{new Date(proj.data_rilascio).toLocaleDateString("it-IT")}</td>
+                                    <td>
+                                        <button className="btn btn-warning btn-sm me-2" onClick={() => handleEdit(proj)}>✏️</button>
+                                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(proj.id)}>🗑️</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    <div className="d-flex justify-content-center mt-3">
+                        <nav>
+                            <ul className="pagination">
+                                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                    <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Precedente</button>
+                                </li>
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
+                                        <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                                    </li>
+                                ))}
+                                <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                    <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Successiva</button>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
                 </div>
-            )}
-
-            <button className="btn btn-primary mb-3" onClick={() => setShowForm(true)}>Nuovo Progetto</button>
-
-            <table className="table table-striped table-bordered text-center">
-                <thead>
-                    <tr>
-                        <th>Titolo</th>
-                        <th>Data Inizio</th>
-                        <th>Durata</th>
-                        <th>Data Rilascio</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {currentItems.map((proj) => (
-                        <tr key={proj.id}>
-                            <td>{proj.titolo}</td>
-                            <td>{new Date(proj.data_inizio).toLocaleDateString("it-IT")}</td>
-                            <td>{proj.durata_presunta} gg</td>
-                            <td>{new Date(proj.data_rilascio).toLocaleDateString("it-IT")}</td>
-                            <td>
-                                <button className="btn btn-warning btn-sm me-2" onClick={() => handleEdit(proj)}>✏️</button>
-                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(proj.id)}>🗑️</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <div className="d-flex justify-content-center mt-3">
-                <nav>
-                    <ul className="pagination">
-                        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Precedente</button>
-                        </li>
-                        {Array.from({ length: totalPages }, (_, i) => (
-                            <li key={i + 1} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                                <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
-                            </li>
-                        ))}
-                        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                            <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Successiva</button>
-                        </li>
-                    </ul>
-                </nav>
             </div>
         </div>
     );
