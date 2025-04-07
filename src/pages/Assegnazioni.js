@@ -18,6 +18,33 @@ import { FaUsers, FaChartPie, FaChartBar } from "react-icons/fa";
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50", "#a4de6c"];
 
+// Colori per soglie
+const getBarColor = (val) => {
+    if (val >= 80) return "#dc3545";       // Rosso
+    if (val >= 50) return "#fd7e14";       // Arancione
+    return "#28a745";                      // Verde
+};
+
+// Legenda personalizzata
+const CustomLegend = () => (
+    <div className="mb-3 d-flex align-items-center gap-3">
+        <span><span className="badge bg-success me-1">&nbsp;</span> <small>Fino al 49%</small></span>
+        <span><span className="badge bg-warning me-1">&nbsp;</span> <small>Dal 50% al 79%</small></span>
+        <span><span className="badge bg-danger me-1">&nbsp;</span> <small>80% o oltre</small></span>
+    </div>
+);
+
+// Label centrato dentro la barra
+const CustomLabel = ({ x, y, width, height, value }) => {
+    const cx = x + width / 2;
+    const cy = y + height / 2 + 4; // +4 per allineamento verticale
+    return (
+        <text x={cx} y={cy} fill="#fff" fontSize={14} textAnchor="middle">
+            {value}%
+        </text>
+    );
+};
+
 const Dashboard = () => {
     const [caricoPersonale, setCaricoPersonale] = useState([]);
     const [personePerProgetto, setPersonePerProgetto] = useState([]);
@@ -123,20 +150,31 @@ const Dashboard = () => {
 
                     <div className="card p-3" ref={printRef}>
                         {activeTab === "carico" && (
-                            <ResponsiveContainer width="100%" height={caricoPersonale.length * 45}>
-                                <BarChart
-                                    data={caricoPersonale}
-                                    layout="vertical"
-                                    margin={{ top: 20, bottom: 20, left: 100, right: 40 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" domain={[0, 100]} />
-                                    <YAxis dataKey="nome" type="category" width={200} interval={0} />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="percentuale" fill="#8884d8" name="% Impiego" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <>
+                                <CustomLegend />
+
+                                <ResponsiveContainer width="100%" height={caricoPersonale.length * 45}>
+                                    <BarChart
+                                        data={caricoPersonale}
+                                        layout="vertical"
+                                        margin={{ top: 10, bottom: 20, left: 100, right: 40 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" domain={[0, 100]} />
+                                        <YAxis dataKey="nome" type="category" width={200} interval={0} />
+                                        <Tooltip formatter={(value) => `${value}%`} />
+                                        <Bar
+                                            dataKey="percentuale"
+                                            name="% Impiego"
+                                            label={<CustomLabel />}
+                                        >
+                                            {caricoPersonale.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={getBarColor(entry.percentuale)} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </>
 
                         )}
 

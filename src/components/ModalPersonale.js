@@ -1,8 +1,7 @@
 import React from "react";
+import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 
 const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave }) => {
-    if (!show) return null;
-
     const isValid =
         formData.matricola.trim() !== "" &&
         formData.df.trim() !== "" &&
@@ -14,105 +13,99 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
         formData.percentuale_impiego <= 100;
 
     return (
-        <div className="modal show fade d-block" tabIndex="-1">
-            <div className="modal-dialog modal-lg">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">
-                            {editing ? "Modifica Risorsa" : "Nuova Risorsa"}
-                        </h5>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
-                    </div>
-                    <div className="modal-body">
-                        <form>
-                            <div className="row">
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">Matricola *</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.matricola}
-                                        onChange={(e) => setFormData({ ...formData, matricola: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">DF *</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.df}
-                                        onChange={(e) => setFormData({ ...formData, df: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">Nome *</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.nome}
-                                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">Cognome *</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.cognome}
-                                        onChange={(e) => setFormData({ ...formData, cognome: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">Ruolo *</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.ruolo}
-                                        onChange={(e) => setFormData({ ...formData, ruolo: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="mb-3 col-4">
-                                    <label className="form-label">Percentuale Impiego (%) *</label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        value={formData.percentuale_impiego}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                percentuale_impiego: parseInt(e.target.value) || 0,
-                                            })
-                                        }
-                                        min="0"
-                                        max="100"
-                                        required disabled
-                                    />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            Chiudi
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={onSave}
-                            disabled={!isValid}
-                            title={!isValid ? "Compila tutti i campi correttamente" : ""}
-                        >
-                            Salva
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Modal
+            show={show}
+            onHide={onClose}
+            size="lg"
+            backdrop="static"
+            keyboard={false}
+        >
+            <Modal.Header closeButton>
+                <Modal.Title>
+                    {editing ? "Modifica Risorsa" : "Nuova Risorsa"}
+                </Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+                <Form>
+                    <Row className="mb-3">
+                        <Col md={4}>
+                            <Form.Label>Matricola *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.matricola}
+                                onChange={(e) => setFormData({ ...formData, matricola: e.target.value })}
+                                required
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <Form.Label>DF *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.df}
+                                onChange={(e) => setFormData({ ...formData, df: e.target.value })}
+                                required
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <Form.Label>Nome *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.nome}
+                                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                                required
+                            />
+                        </Col>
+                    </Row>
+
+                    <Row className="mb-3">
+                        <Col md={4}>
+                            <Form.Label>Cognome *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.cognome}
+                                onChange={(e) => setFormData({ ...formData, cognome: e.target.value })}
+                                required
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <Form.Label>Ruolo *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.ruolo}
+                                onChange={(e) => setFormData({ ...formData, ruolo: e.target.value })}
+                                required
+                            />
+                        </Col>
+                        <Col md={4}>
+                            <Form.Label>Percentuale Impiego (%) *</Form.Label>
+                            <Form.Control
+                                type="number"
+                                value={formData.percentuale_impiego}
+                                min={0}
+                                max={100}
+                                disabled
+                                required
+                            />
+                        </Col>
+                    </Row>
+                </Form>
+            </Modal.Body>
+
+            <Modal.Footer>
+                <Button variant="danger" onClick={onClose}>
+                    Chiudi
+                </Button>
+                <Button
+                    variant="success"
+                    onClick={onSave}
+                    disabled={!isValid}
+                    title={!isValid ? "Compila tutti i campi correttamente" : ""}
+                >
+                    Salva
+                </Button>
+            </Modal.Footer>
+        </Modal>
     );
 };
 

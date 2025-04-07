@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Modal } from "react-bootstrap";
+import ModalDettagliProgetto from "../components/ModalDettagliProgetto";
+
 
 const Home = () => {
     const [progetti, setProgetti] = useState([]);
@@ -81,29 +82,13 @@ const Home = () => {
                     </div>
                 )}
 
-                <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-                    <Modal.Header closeButton>
-                        <Modal.Title>Dettagli progetto: {progettoCorrente?.titolo}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        {assegnazioni.length === 0 ? (
-                            <p className="text-muted">Nessun dipendente assegnato</p>
-                        ) : (
-                            <ul className="list-group">
-                                {assegnazioni.map((a, i) => (
-                                    <li key={i} className="list-group-item">
-                                        <div><strong>{a.ruolo}</strong> – {a.nome} {a.cognome}</div>
-                                        <div className="progress mt-2">
-                                            <div className="progress-bar" role="progressbar" style={{ width: `${a.percentuale}%` }}>
-                                                {a.percentuale}%
-                                            </div>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </Modal.Body>
-                </Modal>
+                <ModalDettagliProgetto
+                    show={showModal}
+                    onClose={() => setShowModal(false)}
+                    progetto={progettoCorrente}
+                    assegnazioni={assegnazioni}
+                />
+
             </div>
         </div>
     );
