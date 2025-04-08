@@ -65,21 +65,35 @@ const Personale = () => {
     };
 
     const handleSave = async () => {
+        const costoNormalizzato = parseFloat(formData.costo?.replace(",", "."));
+
+        if (isNaN(costoNormalizzato)) {
+            alert("Il campo 'Costo in €' deve contenere un numero valido (es. 230.50 o 230,50).");
+            return;
+        }
+
+        const dataToSend = {
+            ...formData,
+            costo: costoNormalizzato
+        };
+
         try {
             if (editing) {
                 await axios.put(
                     `http://localhost:3001/api/personale/${editing.id}`,
-                    formData
+                    dataToSend
                 );
             } else {
-                await axios.post("http://localhost:3001/api/personale", formData);
+                await axios.post("http://localhost:3001/api/personale", dataToSend);
             }
             fetchPersonale();
             handleClose();
         } catch (err) {
             console.error("Errore nel salvataggio:", err);
+            alert("Errore durante il salvataggio del personale.");
         }
     };
+
 
     const handleInfo = async (persona) => {
         try {

@@ -7,13 +7,13 @@ const db = require('../db');
 router.get('/', async (req, res) => {
     try {
         const result = await db.query(`
-      SELECT a.id, a.id_personale, a.id_progetto, a.percentuale,
-             p.nome, p.cognome, p.ruolo,
-             pr.titolo AS progetto
-      FROM assegnazioni a
-      JOIN personale p ON a.id_personale = p.id
-      JOIN progetti pr ON a.id_progetto = pr.id
-    `);
+            SELECT a.id, a.id_personale, a.id_progetto, a.percentuale, a.giorni_previsti,
+                   p.nome, p.cognome, p.ruolo,
+                   pr.titolo AS progetto
+            FROM assegnazioni a
+            JOIN personale p ON a.id_personale = p.id
+            JOIN progetti pr ON a.id_progetto = pr.id
+        `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: 'Errore nel recupero assegnazioni' });
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 router.get('/persona/:id', async (req, res) => {
     try {
         const result = await db.query(`
-            SELECT a.percentuale, pr.titolo AS progetto
+            SELECT a.percentuale, a.giorni_previsti, pr.titolo AS progetto
             FROM assegnazioni a
             JOIN progetti pr ON a.id_progetto = pr.id
             WHERE a.id_personale = $1
@@ -41,7 +41,7 @@ router.get('/persona/:id', async (req, res) => {
 router.get('/:progettoId', async (req, res) => {
     try {
         const result = await db.query(
-            'SELECT id_personale, percentuale FROM assegnazioni WHERE id_progetto = $1',
+            'SELECT id_personale, percentuale, giorni_previsti FROM assegnazioni WHERE id_progetto = $1',
             [req.params.progettoId]
         );
         res.json(result.rows);
@@ -53,7 +53,7 @@ router.get('/:progettoId', async (req, res) => {
 router.get('/dettagli/:progettoId', async (req, res) => {
     try {
         const result = await db.query(`
-            SELECT a.percentuale, p.nome, p.cognome, p.ruolo
+            SELECT a.percentuale, a.giorni_previsti, p.nome, p.cognome, p.ruolo
             FROM assegnazioni a
             JOIN personale p ON a.id_personale = p.id
             WHERE a.id_progetto = $1
@@ -65,8 +65,6 @@ router.get('/dettagli/:progettoId', async (req, res) => {
         res.status(500).json({ error: 'Errore nel recupero dettagli assegnazioni' });
     }
 });
-
-
 
 // POST: crea o sovrascrive assegnazioni per un progetto
 router.post('/', async (req, res) => {
@@ -93,11 +91,12 @@ router.post('/', async (req, res) => {
 
         // 2. Inserisci nuove assegnazioni e aggiorna personale
         for (const a of assegnazioni) {
-            const { id_personale, percentuale } = a;
+            const { id_personale, percentuale, giorni_previsti } = a;
 
             await client.query(
-                'INSERT INTO assegnazioni (id_personale, id_progetto, percentuale) VALUES ($1, $2, $3)',
-                [id_personale, id_progetto, percentuale]
+                `INSERT INTO assegnazioni (id_personale, id_progetto, percentuale, giorni_previsti)
+                 VALUES ($1, $2, $3, $4)`,
+                [id_personale, id_progetto, percentuale, giorni_previsti || 0]
             );
 
             await client.query(

@@ -24,12 +24,12 @@ router.get('/:id', async (req, res) => {
 
 // POST
 router.post('/', async (req, res) => {
-  const { titolo, data_inizio, durata_presunta, data_rilascio } = req.body;
+  const { titolo, data_inizio, durata_presunta, data_rilascio, budget } = req.body;
   try {
     const result = await db.query(
-      `INSERT INTO progetti (titolo, data_inizio, durata_presunta, data_rilascio)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [titolo, data_inizio, durata_presunta, data_rilascio]
+      `INSERT INTO progetti (titolo, data_inizio, durata_presunta, data_rilascio, budget)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [titolo, data_inizio, durata_presunta, data_rilascio, budget]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -37,20 +37,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+
 // PUT
 router.put('/:id', async (req, res) => {
-  const { titolo, data_inizio, durata_presunta, data_rilascio } = req.body;
+  const { titolo, data_inizio, durata_presunta, data_rilascio, budget } = req.body;
   try {
     const result = await db.query(
-      `UPDATE progetti SET titolo=$1, data_inizio=$2, durata_presunta=$3, data_rilascio=$4
-       WHERE id=$5 RETURNING *`,
-      [titolo, data_inizio, durata_presunta, data_rilascio, req.params.id]
+      `UPDATE progetti 
+       SET titolo = $1, data_inizio = $2, durata_presunta = $3, data_rilascio = $4, budget = $5
+       WHERE id = $6 RETURNING *`,
+      [titolo, data_inizio, durata_presunta, data_rilascio, budget, req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
+
 
 // DELETE
 router.delete('/:id', async (req, res) => {

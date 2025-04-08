@@ -24,12 +24,12 @@ router.get('/:id', async (req, res) => {
 
 // POST
 router.post('/', async (req, res) => {
-  const { matricola, df, nome, cognome, ruolo, percentuale_impiego } = req.body;
+  const { matricola, df, nome, cognome, ruolo, percentuale_impiego, costo } = req.body;
   try {
     const result = await db.query(
-      `INSERT INTO personale (matricola, df, nome, cognome, ruolo, percentuale_impiego)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [matricola, df, nome, cognome, ruolo, percentuale_impiego]
+      `INSERT INTO personale (matricola, df, nome, cognome, ruolo, percentuale_impiego, costo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [matricola, df, nome, cognome, ruolo, percentuale_impiego, costo]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -39,12 +39,13 @@ router.post('/', async (req, res) => {
 
 // PUT
 router.put('/:id', async (req, res) => {
-  const { matricola, df, nome, cognome, ruolo, percentuale_impiego } = req.body;
+  const { matricola, df, nome, cognome, ruolo, percentuale_impiego, costo } = req.body;
   try {
     const result = await db.query(
-      `UPDATE personale SET matricola=$1, df=$2, nome=$3, cognome=$4, ruolo=$5, percentuale_impiego=$6
-       WHERE id=$7 RETURNING *`,
-      [matricola, df, nome, cognome, ruolo, percentuale_impiego, req.params.id]
+      `UPDATE personale 
+       SET matricola=$1, df=$2, nome=$3, cognome=$4, ruolo=$5, percentuale_impiego=$6, costo=$7
+       WHERE id=$8 RETURNING *`,
+      [matricola, df, nome, cognome, ruolo, percentuale_impiego, costo, req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {

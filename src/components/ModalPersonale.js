@@ -10,7 +10,8 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
         formData.ruolo.trim() !== "" &&
         !isNaN(formData.percentuale_impiego) &&
         formData.percentuale_impiego >= 0 &&
-        formData.percentuale_impiego <= 100;
+        formData.percentuale_impiego <= 100 &&
+        !isNaN(parseFloat(formData.costo?.replace(',', '.')));
 
     return (
         <Modal
@@ -30,7 +31,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                 <Form>
                     <Row className="mb-3">
                         <Col md={4}>
-                            <Form.Label>Matricola *</Form.Label>
+                            <Form.Label className="fw-bold">Matricola *</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={formData.matricola}
@@ -39,7 +40,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                             />
                         </Col>
                         <Col md={4}>
-                            <Form.Label>DF *</Form.Label>
+                            <Form.Label className="fw-bold">DF *</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={formData.df}
@@ -48,7 +49,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                             />
                         </Col>
                         <Col md={4}>
-                            <Form.Label>Nome *</Form.Label>
+                            <Form.Label className="fw-bold">Nome *</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={formData.nome}
@@ -60,7 +61,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
 
                     <Row className="mb-3">
                         <Col md={4}>
-                            <Form.Label>Cognome *</Form.Label>
+                            <Form.Label className="fw-bold">Cognome *</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={formData.cognome}
@@ -69,7 +70,7 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                             />
                         </Col>
                         <Col md={4}>
-                            <Form.Label>Ruolo *</Form.Label>
+                            <Form.Label className="fw-bold">Ruolo *</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={formData.ruolo}
@@ -78,13 +79,25 @@ const ModalPersonale = ({ show, editing, formData, setFormData, onClose, onSave 
                             />
                         </Col>
                         <Col md={4}>
-                            <Form.Label>Percentuale Impiego (%) *</Form.Label>
+                            <Form.Label className="fw-bold">Percentuale Impiego (%) *</Form.Label>
                             <Form.Control
                                 type="number"
                                 value={formData.percentuale_impiego}
                                 min={0}
                                 max={100}
                                 disabled
+                                required
+                            />
+                        </Col>
+                    </Row>
+                    <Row className="mb-3">
+                        <Col md={4}>
+                            <Form.Label className="fw-bold">Costo in € *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.costo}
+                                onChange={(e) => setFormData({ ...formData, costo: e.target.value })}
+                                placeholder="Es. 230,50 o 230.50"
                                 required
                             />
                         </Col>

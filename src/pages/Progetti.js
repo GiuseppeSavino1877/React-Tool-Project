@@ -7,6 +7,7 @@ const Progetti = () => {
         data_inizio: "",
         durata_presunta: 0,
         data_rilascio: "",
+        budget: "",
     });
     const [editing, setEditing] = useState(null);
     const [progetti, setProgetti] = useState([]);
@@ -23,7 +24,7 @@ const Progetti = () => {
     const [sortDirection, setSortDirection] = useState("asc");
     const itemsPerPage = 12;
 
-    const showToast = (message, type = "success") => {
+    const showToast = (message, type = "success, danger") => {
         setToastMsg(message);
         setToastType(type);
         setTimeout(() => setToastMsg(""), 3000);
@@ -35,17 +36,62 @@ const Progetti = () => {
     }, []);
 
     useEffect(() => {
-        if (formData.data_inizio && formData.data_rilascio) {
+        const fetchAndCalculateBusinessDays = async () => {
+            if (!formData.data_inizio || !formData.data_rilascio) return;
+
             const inizio = new Date(formData.data_inizio);
             const rilascio = new Date(formData.data_rilascio);
-            const diffInTime = rilascio.getTime() - inizio.getTime();
-            const diffInDays = Math.ceil(diffInTime / (1000 * 3600 * 24));
-            if (diffInDays <= 0) {
+
+            if (rilascio <= inizio) {
+                setFormData(prev => ({ ...prev, durata_presunta: 0 }));
                 showToast("La data di rilascio deve essere successiva alla data di inizio", "info");
+                return;
             }
-            setFormData(prev => ({ ...prev, durata_presunta: diffInDays > 0 ? diffInDays : 0 }));
-        }
+
+            try {
+                const yearStart = inizio.getFullYear();
+                const yearEnd = rilascio.getFullYear();
+                const years = Array.from(new Set([yearStart, yearEnd]));
+
+                // Chiedi le festività per ogni anno coinvolto
+                const holidayResponses = await Promise.all(
+                    years.map(year =>
+                        axios.get(`https://date.nager.at/api/v3/PublicHolidays/${year}/IT`)
+                    )
+                );
+
+                const holidayDates = new Set();
+                holidayResponses.forEach(res => {
+                    res.data.forEach(day => {
+                        holidayDates.add(day.date);
+                    });
+                });
+
+                let workingDays = 0;
+                let current = new Date(inizio);
+
+                while (current <= rilascio) {
+                    const day = current.getDay(); // 0 = Domenica, 6 = Sabato
+                    const dateStr = current.toISOString().split("T")[0];
+
+                    if (day !== 0 && day !== 6 && !holidayDates.has(dateStr)) {
+                        workingDays++;
+                    }
+
+                    current.setDate(current.getDate() + 1);
+                }
+
+                setFormData(prev => ({ ...prev, durata_presunta: workingDays }));
+
+            } catch (error) {
+                console.error("Errore nel recupero delle festività:", error);
+                showToast("Errore nel calcolo dei giorni lavorativi", "danger");
+            }
+        };
+
+        fetchAndCalculateBusinessDays();
     }, [formData.data_inizio, formData.data_rilascio]);
+
 
     const fetchProgetti = async () => {
         try {
@@ -97,12 +143,26 @@ const Progetti = () => {
         setFormData({
             ...progetto,
             data_inizio: fixDateForInput(progetto.data_inizio),
-            data_rilascio: fixDateForInput(progetto.data_rilascio)
+            data_rilascio: fixDateForInput(progetto.data_rilascio),
+            budget: progetto.budget !== null
+                ? Number(progetto.budget).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : ""
+
         });
 
         try {
             const res = await axios.get(`http://localhost:3001/api/assegnazioni/${progetto.id}`);
-            setAssegnazioni(res.data);
+
+            const assegnazioniConGiorni = res.data.map(a => {
+                const percentuale = parseFloat(a.percentuale) || 0;
+                const giorniPrevisti = Math.round((progetto.durata_presunta * percentuale) / 100);
+                return {
+                    ...a,
+                    giorni_previsti: giorniPrevisti
+                };
+            });
+
+            setAssegnazioni(assegnazioniConGiorni);
         } catch (err) {
             console.error("Errore nel caricamento assegnazioni:", err);
         }
@@ -116,7 +176,7 @@ const Progetti = () => {
             showToast("Progetto eliminato", "success");
         } catch (err) {
             console.error("Errore nella cancellazione:", err);
-            showToast("Errore nella cancellazione", "error");
+            showToast("Errore nella cancellazione", "danger");
         }
     };
 
@@ -134,7 +194,9 @@ const Progetti = () => {
         formData.titolo.trim() !== "" &&
         formData.data_inizio !== "" &&
         formData.durata_presunta > 0 &&
-        formData.data_rilascio !== "";
+        formData.data_rilascio !== "" &&
+        !isNaN(parseFloat(formData.budget?.replace(',', '.')));
+
 
     const assegnazioniValide =
         assegnazioni.length > 0 &&
@@ -142,15 +204,24 @@ const Progetti = () => {
 
     const handleSave = async () => {
         if (!isValid || !assegnazioniValide) {
-            showToast("Compila correttamente tutti i campi obbligatori e le assegnazioni", "error");
+            showToast("Compila correttamente tutti i campi obbligatori e le assegnazioni", "danger");
             return;
         }
 
         try {
+            const cleanedBudget = formData.budget.replace(/\./g, "").replace(",", ".");
+            const budgetFloat = parseFloat(cleanedBudget);
+
+            if (isNaN(budgetFloat)) {
+                showToast("Inserisci un budget valido in formato numerico", "danger");
+                return;
+            }
+
             const payload = {
                 ...formData,
+                budget: budgetFloat,
                 data_inizio: fixDateForPostgres(formData.data_inizio),
-                data_rilascio: fixDateForPostgres(formData.data_rilascio),
+                data_rilascio: fixDateForPostgres(formData.data_rilascio)
             };
 
             let response;
@@ -164,9 +235,18 @@ const Progetti = () => {
             }
 
             if (assegnazioni.length > 0) {
+                const assegnazioniConGiorni = assegnazioni.map(a => {
+                    const percentuale = parseFloat(a.percentuale) || 0;
+                    const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
+                    return {
+                        ...a,
+                        giorni_previsti: giorniPrevisti
+                    };
+                });
+
                 await axios.post("http://localhost:3001/api/assegnazioni", {
                     id_progetto: response.data.id,
-                    assegnazioni,
+                    assegnazioni: assegnazioniConGiorni
                 });
             }
 
@@ -174,7 +254,7 @@ const Progetti = () => {
             fetchProgetti();
         } catch (err) {
             console.error("Errore durante il salvataggio:", err);
-            showToast("Errore durante il salvataggio", "error");
+            showToast("Errore durante il salvataggio", "danger");
         }
     };
 
@@ -235,7 +315,7 @@ const Progetti = () => {
                             <h5>{editing ? "Modifica Progetto" : "Nuovo Progetto"}</h5>
                             <div className="row">
                                 <div className="mb-3 col-4">
-                                    <label className="form-label">Titolo</label>
+                                    <label className="form-label fw-bold">Titolo</label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -244,7 +324,7 @@ const Progetti = () => {
                                     />
                                 </div>
                                 <div className="mb-3 col-4">
-                                    <label className="form-label">Data Inizio</label>
+                                    <label className="form-label fw-bold">Data Inizio</label>
                                     <input
                                         type="date"
                                         className="form-control"
@@ -253,7 +333,7 @@ const Progetti = () => {
                                     />
                                 </div>
                                 <div className="mb-3 col-4">
-                                    <label className="form-label">Data Rilascio</label>
+                                    <label className="form-label fw-bold">Data Rilascio</label>
                                     <input
                                         type="date"
                                         className="form-control"
@@ -262,7 +342,7 @@ const Progetti = () => {
                                     />
                                 </div>
                                 <div className="mb-3 col-4">
-                                    <label className="form-label">Durata Presunta</label>
+                                    <label className="form-label fw-bold">Durata Presunta</label>
                                     <input
                                         type="number"
                                         className="form-control"
@@ -270,6 +350,34 @@ const Progetti = () => {
                                         disabled
                                     />
                                 </div>
+                                <div className="mb-3 col-4">
+                                    <label className="form-label fw-bold">Budget (€)</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Es. 1.000,50"
+                                        value={formData.budget}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, budget: e.target.value });
+                                        }}
+
+                                        onBlur={(e) => {
+                                            const cleaned = e.target.value.replace(/\./g, "").replace(",", ".");
+                                            const parsed = parseFloat(cleaned);
+                                            if (!isNaN(parsed)) {
+                                                const formatted = parsed.toLocaleString("it-IT", {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2
+                                                });
+                                                setFormData({ ...formData, budget: formatted });
+                                            }
+                                        }}
+
+                                        required
+                                    />
+
+                                </div>
+
                             </div>
 
                             <div className="mb-3">
@@ -295,42 +403,80 @@ const Progetti = () => {
                                     if (!persona) return null;
 
                                     const maxDisponibile = 100 - persona.percentuale_impiego;
+                                    const percentuale = parseFloat(a.percentuale) || 0;
+                                    const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
 
                                     return (
                                         <div key={index} className="row align-items-center border rounded p-2 mb-2">
 
                                             {/* Colonna 1 - Nome, ruolo e massimo */}
-                                            <div className="col-md-6 col-12">
+                                            <div className="col-md-4 col-12">
                                                 {persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)
                                             </div>
 
                                             {/* Colonna 2 - Input percentuale */}
                                             <div className="col-md-3 col-6">
                                                 <input
-                                                    type="number"
+                                                    type="text"
                                                     className="form-control"
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
                                                     value={a.percentuale}
-                                                    min="0"
-                                                    max={maxDisponibile}
                                                     onChange={(e) => {
-                                                        const valore = Math.min(parseInt(e.target.value) || 0, maxDisponibile);
-                                                        setAssegnazioni(prev => prev.map((item, i) => i === index ? { ...item, percentuale: valore } : item));
+                                                        let raw = e.target.value.replace(",", ".");
+                                                        let parsed = parseFloat(raw);
+
+                                                        if (!isNaN(parsed)) {
+                                                            parsed = Math.max(0, Math.min(parsed, maxDisponibile));
+                                                            setAssegnazioni(prev =>
+                                                                prev.map((item, i) =>
+                                                                    i === index ? { ...item, percentuale: parsed } : item
+                                                                )
+                                                            );
+                                                        } else if (e.target.value === "") {
+                                                            setAssegnazioni(prev =>
+                                                                prev.map((item, i) =>
+                                                                    i === index ? { ...item, percentuale: "" } : item
+                                                                )
+                                                            );
+                                                        }
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === "") {
+                                                            setAssegnazioni(prev =>
+                                                                prev.map((item, i) =>
+                                                                    i === index ? { ...item, percentuale: 0 } : item
+                                                                )
+                                                            );
+                                                        }
                                                     }}
                                                 />
                                             </div>
 
-                                            {/* Colonna 3 - Bottone elimina */}
-                                            <div className="col-md-3 col-6 text-end">
+                                            {/* Colonna 3 - Giorni previsti */}
+                                            <div className="col-md-3 col-6">
+                                                <input
+                                                    type="text"
+                                                    className="form-control bg-light"
+                                                    value={`${giorniPrevisti} gg`}
+                                                    readOnly
+                                                    disabled
+                                                />
+                                            </div>
+
+                                            {/* Colonna 4 - Bottone elimina */}
+                                            <div className="col-md-2 col-12 text-end">
                                                 <button
                                                     className="btn btn-danger btn-sm"
                                                     onClick={() => setAssegnazioni(prev => prev.filter((_, i) => i !== index))}
                                                 >
-                                                    🗑️
+                                                    🖑️
                                                 </button>
                                             </div>
                                         </div>
                                     );
                                 })}
+
 
                             </div>
 

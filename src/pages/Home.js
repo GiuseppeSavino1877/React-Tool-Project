@@ -52,7 +52,13 @@ const Home = () => {
                                     <h5 className="card-title fw-bold">{proj.titolo}</h5>
                                     <p className="card-text">
                                         <strong>Inizio:</strong> {new Date(proj.data_inizio).toLocaleDateString("it-IT")}<br />
-                                        <strong>Rilascio:</strong> {new Date(proj.data_rilascio).toLocaleDateString("it-IT")}
+                                        <strong>Rilascio:</strong> {new Date(proj.data_rilascio).toLocaleDateString("it-IT")}<br />
+                                        <strong>Budget:</strong>{" "}
+                                        {Number(proj.budget).toLocaleString("it-IT", {
+                                            style: "currency",
+                                            currency: "EUR"
+                                        })}<br />
+
                                     </p>
                                     <button className="btn btn-info" onClick={() => openModal(proj)}>ℹ️</button>
                                 </div>
