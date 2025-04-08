@@ -140,6 +140,8 @@ const Progetti = () => {
             return new Date(date.getTime() - timezoneOffset).toISOString().split("T")[0];
         };
 
+        await fetchPersonaleDisponibile();
+
         setFormData({
             ...progetto,
             data_inizio: fixDateForInput(progetto.data_inizio),
@@ -147,7 +149,6 @@ const Progetti = () => {
             budget: progetto.budget !== null
                 ? Number(progetto.budget).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 : ""
-
         });
 
         try {
@@ -252,6 +253,7 @@ const Progetti = () => {
 
             resetForm();
             fetchProgetti();
+            fetchPersonaleDisponibile();
         } catch (err) {
             console.error("Errore durante il salvataggio:", err);
             showToast("Errore durante il salvataggio", "danger");
