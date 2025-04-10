@@ -23,6 +23,11 @@ const Progetti = () => {
     const [sortBy, setSortBy] = useState("titolo");
     const [sortDirection, setSortDirection] = useState("asc");
     const itemsPerPage = 12;
+    const [invalidIndices, setInvalidIndices] = useState([]);
+    //const [formErrors, setFormErrors] = useState({});
+    const [hasTriedToSave, setHasTriedToSave] = useState(false);
+
+
 
     const showToast = (message, type = "success, danger") => {
         setToastMsg(message);
@@ -159,9 +164,12 @@ const Progetti = () => {
                 const giorniPrevisti = Math.round((progetto.durata_presunta * percentuale) / 100);
                 return {
                     ...a,
-                    giorni_previsti: giorniPrevisti
+                    percentuale,
+                    giorni_previsti: giorniPrevisti,
+                    percentuale_precedente: percentuale, // 👈 salvi anche la percentuale precedente!
                 };
             });
+
 
             setAssegnazioni(assegnazioniConGiorni);
         } catch (err) {
@@ -191,74 +199,187 @@ const Progetti = () => {
         setPersonaSelezionata("");
     };
 
-    const isValid =
+    /*const isValid =
         formData.titolo.trim() !== "" &&
         formData.data_inizio !== "" &&
         formData.durata_presunta > 0 &&
         formData.data_rilascio !== "" &&
-        !isNaN(parseFloat(formData.budget?.replace(',', '.')));
+        !isNaN(parseFloat(formData.budget?.replace(',', '.')));*/
 
 
-    const assegnazioniValide =
+    /*const assegnazioniValide =
         assegnazioni.length > 0 &&
-        assegnazioni.every(a => a.percentuale > 0);
+        assegnazioni.every(a => a.percentuale > 0);*/
 
     const handleSave = async () => {
-        if (!isValid || !assegnazioniValide) {
-            showToast("Compila correttamente tutti i campi obbligatori e le assegnazioni", "danger");
+
+        setHasTriedToSave(true);
+
+        const newErrors = {};
+        if (!formData.titolo.trim()) newErrors.titolo = true;
+        if (!formData.data_inizio) newErrors.data_inizio = true;
+        if (!formData.data_rilascio) newErrors.data_rilascio = true;
+        if (!formData.budget) newErrors.budget = true;
+
+        if (Object.keys(newErrors).length > 0) {
+           // setFormErrors(newErrors);
+            showToast("Compila tutti i campi obbligatori con valori validi", "danger");
+            return;
+        }
+       // setFormErrors({});
+
+        const cleanedBudget = formData.budget.replace(/\./g, "").replace(",", ".");
+        const budgetFloat = parseFloat(cleanedBudget);
+
+        if (isNaN(budgetFloat)) {
+            showToast("Inserisci un budget valido", "danger");
             return;
         }
 
-        try {
-            const cleanedBudget = formData.budget.replace(/\./g, "").replace(",", ".");
-            const budgetFloat = parseFloat(cleanedBudget);
 
-            if (isNaN(budgetFloat)) {
-                showToast("Inserisci un budget valido in formato numerico", "danger");
-                return;
+        // 🔍 Validazione percentuali mancanti o non numeriche
+        const invalidPercentuali = assegnazioni
+            .map((a, idx) => {
+                const val = parseFloat(a.percentuale);
+                if (isNaN(val) || val < 0) return idx;
+                return null;
+            })
+            .filter((i) => i !== null);
+
+        if (invalidPercentuali.length > 0) {
+            setInvalidIndices(invalidPercentuali);
+            showToast("Tutte le percentuali devono essere numeriche e ≥ 0", "danger");
+            return;
+        }
+
+        // 🔍 Validazione disponibilità massima
+        const errorIndices = [];
+
+        for (let i = 0; i < assegnazioni.length; i++) {
+            const a = assegnazioni[i];
+            const persona = personaleDisponibile.find(p => p.id === a.id_personale);
+            if (!persona) continue;
+
+            const percentualeInput = parseFloat(a.percentuale) || 0;
+            const impiegoAttuale = parseFloat(persona.percentuale_impiego) || 0;
+
+            const assegnazioneOriginale = a.percentuale_precedente;
+            const impiegoReale = editing && assegnazioneOriginale !== undefined
+                ? impiegoAttuale - assegnazioneOriginale
+                : impiegoAttuale;
+
+            const totaleFinale = impiegoReale + percentualeInput;
+
+            if (percentualeInput > 0 && totaleFinale > 100) {
+                errorIndices.push(i); // ✅ errore solo se > 0 e sfora
             }
+        }
 
-            const payload = {
-                ...formData,
-                budget: budgetFloat,
-                data_inizio: fixDateForPostgres(formData.data_inizio),
-                data_rilascio: fixDateForPostgres(formData.data_rilascio)
-            };
+        if (errorIndices.length > 0) {
+            setInvalidIndices(errorIndices);
+            showToast("Alcune assegnazioni superano il 100% di impiego!", "danger");
+            return;
+        }
 
+        setInvalidIndices([]);
+
+        // 🔁 payload e salvataggio normale (progetto e assegnazioni)
+        const payload = {
+            ...formData,
+            budget: budgetFloat,
+            data_inizio: fixDateForPostgres(formData.data_inizio),
+            data_rilascio: fixDateForPostgres(formData.data_rilascio),
+        };
+
+        try {
             let response;
             if (editing) {
                 await axios.put(`http://localhost:3001/api/progetti/${editing.id}`, payload);
                 response = { data: { id: editing.id } };
-                showToast("Progetto aggiornato con successo!", "success");
             } else {
                 response = await axios.post("http://localhost:3001/api/progetti", payload);
-                showToast("Nuovo progetto salvato!", "success");
             }
 
-            if (assegnazioni.length > 0) {
-                const assegnazioniConGiorni = assegnazioni.map(a => {
-                    const percentuale = parseFloat(a.percentuale) || 0;
-                    const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
-                    return {
-                        ...a,
-                        giorni_previsti: giorniPrevisti
-                    };
-                });
+            const assegnazioniConGiorni = assegnazioni.map(a => ({
+                id_personale: a.id_personale,
+                percentuale: a.percentuale,
+                giorni_previsti: Math.round((formData.durata_presunta * (parseFloat(a.percentuale) || 0)) / 100)
+            }));
 
-                await axios.post("http://localhost:3001/api/assegnazioni", {
-                    id_progetto: response.data.id,
-                    assegnazioni: assegnazioniConGiorni
-                });
-            }
+            await axios.post("http://localhost:3001/api/assegnazioni", {
+                id_progetto: response.data.id,
+                assegnazioni: assegnazioniConGiorni
+            });
 
+            showToast("Salvataggio completato", "success");
             resetForm();
+            setHasTriedToSave(false);
             fetchProgetti();
             fetchPersonaleDisponibile();
+
         } catch (err) {
-            console.error("Errore durante il salvataggio:", err);
-            showToast("Errore durante il salvataggio", "danger");
+            console.error("Errore nel salvataggio", err);
+            showToast("Errore nel salvataggio", "danger");
         }
     };
+
+
+    /* const handleSave = async () => {
+         if (!isValid || !assegnazioniValide) {
+             showToast("Compila correttamente tutti i campi obbligatori e le assegnazioni", "danger");
+             return;
+         }
+ 
+         try {
+             const cleanedBudget = formData.budget.replace(/\./g, "").replace(",", ".");
+             const budgetFloat = parseFloat(cleanedBudget);
+ 
+             if (isNaN(budgetFloat)) {
+                 showToast("Inserisci un budget valido in formato numerico", "danger");
+                 return;
+             }
+ 
+             const payload = {
+                 ...formData,
+                 budget: budgetFloat,
+                 data_inizio: fixDateForPostgres(formData.data_inizio),
+                 data_rilascio: fixDateForPostgres(formData.data_rilascio)
+             };
+ 
+             let response;
+             if (editing) {
+                 await axios.put(`http://localhost:3001/api/progetti/${editing.id}`, payload);
+                 response = { data: { id: editing.id } };
+                 showToast("Progetto aggiornato con successo!", "success");
+             } else {
+                 response = await axios.post("http://localhost:3001/api/progetti", payload);
+                 showToast("Nuovo progetto salvato!", "success");
+             }
+ 
+             if (assegnazioni.length > 0) {
+                 const assegnazioniConGiorni = assegnazioni.map(a => {
+                     const percentuale = parseFloat(a.percentuale) || 0;
+                     const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
+                     return {
+                         ...a,
+                         giorni_previsti: giorniPrevisti
+                     };
+                 });
+ 
+                 await axios.post("http://localhost:3001/api/assegnazioni", {
+                     id_progetto: response.data.id,
+                     assegnazioni: assegnazioniConGiorni
+                 });
+             }
+ 
+             resetForm();
+             fetchProgetti();
+             fetchPersonaleDisponibile();
+         } catch (err) {
+             console.error("Errore durante il salvataggio:", err);
+             showToast("Errore durante il salvataggio", "danger");
+         }
+     };*/
 
     const sortedProgetti = [...progetti]
         .filter(proj => proj.titolo.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -316,33 +437,49 @@ const Progetti = () => {
                         <div className="card p-3 mb-4">
                             <h5>{editing ? "Modifica Progetto" : "Nuovo Progetto"}</h5>
                             <div className="row">
+                                {/* Titolo */}
                                 <div className="mb-3 col-4">
-                                    <label className="form-label fw-bold">Titolo</label>
+                                    <label className="form-label fw-bold">Titolo *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className={`form-control ${hasTriedToSave && !formData.titolo.trim() ? 'is-invalid' : ''}`}
                                         value={formData.titolo}
                                         onChange={e => setFormData({ ...formData, titolo: e.target.value })}
                                     />
+                                    {hasTriedToSave && !formData.titolo.trim() && (
+                                        <div className="invalid-feedback">Il titolo è obbligatorio</div>
+                                    )}
                                 </div>
+
+                                {/* Data Inizio */}
                                 <div className="mb-3 col-4">
-                                    <label className="form-label fw-bold">Data Inizio</label>
+                                    <label className="form-label fw-bold">Data Inizio *</label>
                                     <input
                                         type="date"
-                                        className="form-control"
+                                        className={`form-control ${hasTriedToSave && !formData.data_inizio ? 'is-invalid' : ''}`}
                                         value={formData.data_inizio}
                                         onChange={e => setFormData({ ...formData, data_inizio: e.target.value })}
                                     />
+                                    {hasTriedToSave && !formData.data_inizio && (
+                                        <div className="invalid-feedback">La data di inizio è obbligatoria</div>
+                                    )}
                                 </div>
+
+                                {/* Data Rilascio */}
                                 <div className="mb-3 col-4">
-                                    <label className="form-label fw-bold">Data Rilascio</label>
+                                    <label className="form-label fw-bold">Data Rilascio *</label>
                                     <input
                                         type="date"
-                                        className="form-control"
+                                        className={`form-control ${hasTriedToSave && !formData.data_rilascio ? 'is-invalid' : ''}`}
                                         value={formData.data_rilascio}
                                         onChange={e => setFormData({ ...formData, data_rilascio: e.target.value })}
                                     />
+                                    {hasTriedToSave && !formData.data_rilascio && (
+                                        <div className="invalid-feedback">La data di rilascio è obbligatoria</div>
+                                    )}
                                 </div>
+
+                                {/* Durata Presunta */}
                                 <div className="mb-3 col-4">
                                     <label className="form-label fw-bold">Durata Presunta</label>
                                     <input
@@ -352,17 +489,18 @@ const Progetti = () => {
                                         disabled
                                     />
                                 </div>
+
+                                {/* Budget */}
                                 <div className="mb-3 col-4">
-                                    <label className="form-label fw-bold">Budget (€)</label>
+                                    <label className="form-label fw-bold">Budget (€) *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className={`form-control ${hasTriedToSave && isNaN(parseFloat(formData.budget?.replace(/\./g, "").replace(",", "."))) ? 'is-invalid' : ''}`}
                                         placeholder="Es. 1.000,50"
                                         value={formData.budget}
                                         onChange={(e) => {
                                             setFormData({ ...formData, budget: e.target.value });
                                         }}
-
                                         onBlur={(e) => {
                                             const cleaned = e.target.value.replace(/\./g, "").replace(",", ".");
                                             const parsed = parseFloat(cleaned);
@@ -374,13 +512,13 @@ const Progetti = () => {
                                                 setFormData({ ...formData, budget: formatted });
                                             }
                                         }}
-
-                                        required
                                     />
-
+                                    {hasTriedToSave && isNaN(parseFloat(formData.budget?.replace(/\./g, "").replace(",", "."))) && (
+                                        <div className="invalid-feedback">Inserisci un budget valido</div>
+                                    )}
                                 </div>
-
                             </div>
+
 
                             <div className="mb-3">
                                 <h5>Assegnazioni Personale</h5>
@@ -408,54 +546,39 @@ const Progetti = () => {
                                     const percentuale = parseFloat(a.percentuale) || 0;
                                     const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
 
+                                    const isInvalid = invalidIndices.includes(index);
+                                    const valoreInserito = parseFloat(a.percentuale);
+                                    const erroreTipo = isNaN(valoreInserito) || valoreInserito <= 0
+                                        ? "Inserisci una percentuale valida maggiore o uguale a 0"
+                                        : "La percentuale supera il limite massimo disponibile per questa persona.";
+
                                     return (
                                         <div key={index} className="row align-items-center border rounded p-2 mb-2">
-
-                                            {/* Colonna 1 - Nome, ruolo e massimo */}
                                             <div className="col-md-4 col-12">
                                                 {persona.nome} {persona.cognome} – {persona.ruolo} (max {maxDisponibile}%)
                                             </div>
 
-                                            {/* Colonna 2 - Input percentuale */}
                                             <div className="col-md-3 col-6">
                                                 <input
                                                     type="text"
-                                                    className="form-control"
+                                                    className={`form-control ${isInvalid ? "is-invalid" : ""}`}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
                                                     value={a.percentuale}
                                                     onChange={(e) => {
-                                                        let raw = e.target.value.replace(",", ".");
-                                                        let parsed = parseFloat(raw);
-
-                                                        if (!isNaN(parsed)) {
-                                                            parsed = Math.max(0, Math.min(parsed, maxDisponibile));
-                                                            setAssegnazioni(prev =>
-                                                                prev.map((item, i) =>
-                                                                    i === index ? { ...item, percentuale: parsed } : item
-                                                                )
-                                                            );
-                                                        } else if (e.target.value === "") {
-                                                            setAssegnazioni(prev =>
-                                                                prev.map((item, i) =>
-                                                                    i === index ? { ...item, percentuale: "" } : item
-                                                                )
-                                                            );
-                                                        }
-                                                    }}
-                                                    onBlur={(e) => {
-                                                        if (e.target.value === "") {
-                                                            setAssegnazioni(prev =>
-                                                                prev.map((item, i) =>
-                                                                    i === index ? { ...item, percentuale: 0 } : item
-                                                                )
-                                                            );
-                                                        }
+                                                        const value = e.target.value.replace(",", ".");
+                                                        setAssegnazioni(prev =>
+                                                            prev.map((item, i) =>
+                                                                i === index ? { ...item, percentuale: value } : item
+                                                            )
+                                                        );
                                                     }}
                                                 />
+                                                {isInvalid && (
+                                                    <div className="invalid-feedback">{erroreTipo}</div>
+                                                )}
                                             </div>
 
-                                            {/* Colonna 3 - Giorni previsti */}
                                             <div className="col-md-3 col-6">
                                                 <input
                                                     type="text"
@@ -466,7 +589,6 @@ const Progetti = () => {
                                                 />
                                             </div>
 
-                                            {/* Colonna 4 - Bottone elimina */}
                                             <div className="col-md-2 col-12 text-end">
                                                 <button
                                                     className="btn btn-danger btn-sm"
@@ -478,6 +600,7 @@ const Progetti = () => {
                                         </div>
                                     );
                                 })}
+
 
 
                             </div>
