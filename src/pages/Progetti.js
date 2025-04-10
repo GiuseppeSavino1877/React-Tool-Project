@@ -199,18 +199,6 @@ const Progetti = () => {
         setPersonaSelezionata("");
     };
 
-    /*const isValid =
-        formData.titolo.trim() !== "" &&
-        formData.data_inizio !== "" &&
-        formData.durata_presunta > 0 &&
-        formData.data_rilascio !== "" &&
-        !isNaN(parseFloat(formData.budget?.replace(',', '.')));*/
-
-
-    /*const assegnazioniValide =
-        assegnazioni.length > 0 &&
-        assegnazioni.every(a => a.percentuale > 0);*/
-
     const handleSave = async () => {
 
         setHasTriedToSave(true);
@@ -323,63 +311,6 @@ const Progetti = () => {
         }
     };
 
-
-    /* const handleSave = async () => {
-         if (!isValid || !assegnazioniValide) {
-             showToast("Compila correttamente tutti i campi obbligatori e le assegnazioni", "danger");
-             return;
-         }
- 
-         try {
-             const cleanedBudget = formData.budget.replace(/\./g, "").replace(",", ".");
-             const budgetFloat = parseFloat(cleanedBudget);
- 
-             if (isNaN(budgetFloat)) {
-                 showToast("Inserisci un budget valido in formato numerico", "danger");
-                 return;
-             }
- 
-             const payload = {
-                 ...formData,
-                 budget: budgetFloat,
-                 data_inizio: fixDateForPostgres(formData.data_inizio),
-                 data_rilascio: fixDateForPostgres(formData.data_rilascio)
-             };
- 
-             let response;
-             if (editing) {
-                 await axios.put(`http://localhost:3001/api/progetti/${editing.id}`, payload);
-                 response = { data: { id: editing.id } };
-                 showToast("Progetto aggiornato con successo!", "success");
-             } else {
-                 response = await axios.post("http://localhost:3001/api/progetti", payload);
-                 showToast("Nuovo progetto salvato!", "success");
-             }
- 
-             if (assegnazioni.length > 0) {
-                 const assegnazioniConGiorni = assegnazioni.map(a => {
-                     const percentuale = parseFloat(a.percentuale) || 0;
-                     const giorniPrevisti = Math.round((formData.durata_presunta * percentuale) / 100);
-                     return {
-                         ...a,
-                         giorni_previsti: giorniPrevisti
-                     };
-                 });
- 
-                 await axios.post("http://localhost:3001/api/assegnazioni", {
-                     id_progetto: response.data.id,
-                     assegnazioni: assegnazioniConGiorni
-                 });
-             }
- 
-             resetForm();
-             fetchProgetti();
-             fetchPersonaleDisponibile();
-         } catch (err) {
-             console.error("Errore durante il salvataggio:", err);
-             showToast("Errore durante il salvataggio", "danger");
-         }
-     };*/
 
     const sortedProgetti = [...progetti]
         .filter(proj => proj.titolo.toLowerCase().includes(searchTerm.toLowerCase()))
